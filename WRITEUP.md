@@ -1,6 +1,6 @@
 # X Outreach Prototype: One-Page Write-up
 
-*[Your Name] · GenAI Fund FDE take-home · [repo link] · [video link]*
+*[Your Name] · GenAI Fund FDE take-home · [github.com/DTNS2905/genai-fund-fde-takehome](https://github.com/DTNS2905/genai-fund-fde-takehome) · [video link]*
 
 ## Approach
 I treated the brief as a client request with one hard test: *can GenAI Fund run outreach with it on their own?*

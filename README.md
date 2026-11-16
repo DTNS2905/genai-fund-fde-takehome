@@ -22,7 +22,7 @@ score + draft       editable draft
 
 **1. Install**
 ```bash
-git clone <repo-url> && cd <repo>
+git clone https://github.com/DTNS2905/genai-fund-fde-takehome.git && cd genai-fund-fde-takehome
 uv sync
 ```
 
