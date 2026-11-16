@@ -197,6 +197,13 @@ variables; "none" instead of empty values because Windows drops empty env vars. 
 across the session: @karpathy, @DrJimFan, @sama, @amasad drafts, every one delivered to the test account (delivery
 address checked in the spend log). Total X spend: **$1.605** of the $3.50 cap.
 
+### Fresh-clone setup test (16 Nov 22:31, as a reviewer's agent would do it)
+Empty temp folder → `git clone` from GitHub (2 s) → `uv sync` (12 s, with a warm uv cache; expect 1–2 min on a new
+machine) → copy example settings → `tests.test_core` ✅ → `tests.test_redirect` ✅ → `scripts.doctor` = **Ready**
+(mock mode, warning: no LLM) → total **19 s**. Then the full mock UI flow from the clone via
+`DEMO_PACE=0.3 uv run python -m scripts.demo`: exit 0 in 42 s. Not covered: the human-only steps (X developer app,
+credits, keys), which the README budgets at ~10 minutes.
+
 ### Familiarity detector (16 Nov)
 `llm.familiarity()` flags phrases implying a relationship we don't have (been following, nice meeting you, your
 keynote, as we discussed, huge fan, ...). It triggers the repair call and **blocks approval** in the review screen
