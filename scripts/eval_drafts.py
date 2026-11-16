@@ -1,7 +1,7 @@
 """Measure draft quality offline ($0: no X calls; LLM calls only if LLM_* is configured).
 
-  uv run python eval_drafts.py            # live DB (outreach.db)
-  X_MOCK=1 uv run python eval_drafts.py   # mock DB
+  uv run python -m scripts.eval_drafts            # live DB (outreach.db)
+  X_MOCK=1 uv run python -m scripts.eval_drafts   # mock DB
 
 Compares the drafts stored in the DB (as generated at the time) with drafts regenerated NOW by the current
 llm.py from the same stored posts. Each draft is checked against rules from outreach research:
@@ -28,8 +28,8 @@ if os.path.exists(".streamlit/secrets.toml"):
         for k, v in tomllib.load(f).items():
             os.environ.setdefault(k, str(v))
 
-import db  # noqa: E402
-import llm  # noqa: E402
+from outreach import db  # noqa: E402
+from outreach import llm  # noqa: E402
 
 SEGMENT = ("AI and robotics builders, founders and researchers: models, dev tools, infrastructure, robotics, "
            "embodied AI. Bonus: Southeast Asia.")

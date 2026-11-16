@@ -6,7 +6,7 @@ one needs encrypted chat, replies arrive after an API send, one reply is an opt-
 """
 import time
 
-import db
+from outreach import db
 
 ME = {"id": "1000", "username": "demo_sender", "name": "Demo Sender"}
 
@@ -73,7 +73,7 @@ def _add_event(sender, other, text):
 
 
 def handle(method, path, params=None, json=None):
-    from x import XError  # avoid import cycle
+    from outreach.x import XError  # avoid import cycle
     params = params or {}
     p = path.split("/")
     if path == "/users/me":

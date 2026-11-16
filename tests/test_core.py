@@ -1,13 +1,13 @@
-"""Self-checks for the logic that must not break. Run: uv run python test_core.py"""
+"""Self-checks for the logic that must not break. Run: uv run python -m tests.test_core"""
 import os
 import tempfile
 
 os.environ["OUTREACH_DB"] = os.path.join(tempfile.mkdtemp(), "t.db")
 os.environ.pop("LLM_MODEL", None)
 
-import db  # noqa: E402
-import llm  # noqa: E402
-import x  # noqa: E402
+from outreach import db  # noqa: E402
+from outreach import llm  # noqa: E402
+from outreach import x  # noqa: E402
 
 # double-send guard
 assert db.claim_send("1", "hi", "api")

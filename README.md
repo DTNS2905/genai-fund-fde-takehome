@@ -11,41 +11,52 @@ filter junk         evidence posts,       blocked (with reason) · opted out
 score + draft       editable draft
 ```
 
-## Setup (about 10 minutes)
+## Setup in 15 minutes
 
-**Requirements**
-- Python 3.11+ and [uv](https://docs.astral.sh/uv/) (`pip install uv` or see uv docs)
-- For live use: an X developer account with **pay-per-use credits** (X has no free API tier).
-  Expect about **$2 per search run** and **$0.02 per DM**: see Costs below.
-- Optional but recommended: an LLM. Free options: a **Gemini API key** (aistudio.google.com, free tier) or a local
-  model with **Ollama**. Without one, a rule-based scorer and template drafts are used (generic; see below).
+**You need:** Python 3.11+ and [uv](https://docs.astral.sh/uv/) · an X developer account with pay-per-use credits
+(X has no free API tier; ~$5 covers testing) · a second X account you control, to receive test messages ·
+optionally a free [Gemini API key](https://aistudio.google.com) or [Ollama](https://ollama.com) for LLM drafts.
 
-**1. Install**
+### Minutes 0–3: install and try it with fake data ($0)
 ```bash
 git clone https://github.com/DTNS2905/genai-fund-fde-takehome.git && cd genai-fund-fde-takehome
 uv sync
-```
-
-**2. Configure**: copy the example settings:
-```bash
-cp .streamlit/secrets.toml.example .streamlit/secrets.toml
-```
-The example starts in **mock mode** (`X_MOCK = "1"`): fictional accounts, nothing sent, $0. Good for a first look.
-
-**3. Run**
-```bash
+cp .streamlit/secrets.toml.example .streamlit/secrets.toml     # Windows PowerShell: Copy-Item instead of cp
 uv run streamlit run app.py
 ```
-Open http://127.0.0.1:8501.
+Open http://127.0.0.1:8501. The example settings start in **mock mode**: fictional accounts, nothing sent, $0.
+Click *Find people*, review a draft, send, then *Inbox → Refresh* to see the whole loop.
 
-### Going live with your X account
-1. developer.x.com → create a Project + App → buy credits (set a **spending limit** in the console).
-2. App → *User authentication settings* → OAuth 2.0, type **Web App**,
-   callback URL **`http://127.0.0.1:8501/`**, website: any URL you own.
-3. Copy Client ID / Client Secret into `.streamlit/secrets.toml`, and **delete the `X_MOCK` line**.
+### Minutes 3–10: connect your X account
+1. [developer.x.com](https://developer.x.com) → create a Project + App → **Billing**: buy credits and set a spending limit.
+2. App → **User authentication settings**: OAuth 2.0, type **Web App**, permissions **Read and write and Direct
+   message**, callback URL exactly **`http://127.0.0.1:8501/`**, website: any URL you own.
+3. App → **Keys and tokens** → copy the **OAuth 2.0 Client ID and Client Secret** (not the API key / bearer token)
+   into `.streamlit/secrets.toml`. Comment out `X_MOCK = "1"`.
 4. Restart the app → **Connect X account** in the sidebar → authorise.
 
-Permissions requested: `tweet.read users.read dm.read dm.write offline.access`.
+### Minutes 10–13: choose the LLM (one line)
+Gemini free tier: `LLM_MODEL = "gemini/gemini-3.1-flash-lite"` + `GEMINI_API_KEY`. Or local and private:
+`LLM_MODEL = "ollama/qwen3"` (no key). Other providers: see the table below. Empty = rule-based drafts.
+
+### Minutes 13–15: a safe first live run (~$0.45)
+1. In `secrets.toml` set `TEST_RECIPIENT = "<your second account>"` (every message goes there; red banner shows it)
+   and `X_BUDGET_USD = "3"` (hard spending cap).
+2. *Find people* with **Posts to search = 10** and **posts per candidate = 5** (estimate ≈ $0.40).
+3. Approve one draft → *send via API* → it arrives in your second account. Reply from there, wait a minute,
+   *Inbox → Refresh*: the reply shows under **Needs attention**.
+4. To go live for real: remove `TEST_RECIPIENT`. Cold DMs then use **send in X** (you press Send in X itself).
+
+### Troubleshooting (all seen during testing)
+| Symptom | Fix |
+|---|---|
+| X login page says "Something went wrong" | Callback URL must be exactly `http://127.0.0.1:8501/`, app type Web App; open the app at `127.0.0.1`, not `localhost` |
+| "No X API credits left" (HTTP 402) | Buy credits in the developer console (some local bank cards are declined; a Visa/Mastercard virtual card works) |
+| Gemini errors with 429 / quota | Free tier = 20 requests/day **per model**: switch `LLM_MODEL` to another model or `ollama/qwen3` |
+| Certificate errors calling the LLM | Handled via the OS certificate store (`truststore`); behind a corporate proxy, Ollama avoids it |
+| A reply doesn't show up | X's DM list lags up to ~1 min; refresh again (allowed once a minute) |
+
+Permissions requested from X: `tweet.read users.read dm.read dm.write offline.access`.
 
 ### Choosing an LLM (one setting, via LiteLLM)
 Set `LLM_MODEL` in `secrets.toml` plus that provider's key; switching provider needs no code change:
@@ -97,11 +108,11 @@ Drafts (version `v3-sender-exact`) are built from the person's real recent posts
   LLM for real personalisation, and always read the draft before sending.
 
 ## Measuring quality
-- `uv run python eval_drafts.py`: $0 on X. Scores drafts on 9 checks (grounded, no_paste, short, one_question,
+- `uv run python -m scripts.eval_drafts`: $0 on X. Scores drafts on 9 checks (grounded, no_paste, short, one_question,
   specific_q, no_cliche, unique_q, sender_exact, no_familiar) and compares stored drafts with ones regenerated now.
-- `uv run python persona_test.py`: drafts for real public accounts (or a search sample with `--search`), **never
+- `uv run python -m scripts.persona_test`: drafts for real public accounts (or a search sample with `--search`), **never
   sends**, writes `outputs/persona_test_<time>.json` + `.md`; posts are cached so re-runs cost $0 on X.
-  `--summary <files>` combines runs (pass rates, run-to-run variation). How far to trust these checks: TEST_LOG.md.
+  `--summary <files>` combines runs (pass rates, run-to-run variation). How far to trust these checks: [docs/TEST_LOG.md](docs/TEST_LOG.md).
 - Inbox → **Outcomes by draft version**: for each version, sent, reply rate, opt-out rate and average human edit.
   Every sent message stores its `variant` and an `edit_ratio` (0 = sent as drafted, 1 = fully rewritten).
   You need roughly 30+ sends per version before comparing them.
@@ -147,9 +158,20 @@ Prices from docs.x.com pricing page; verify in your developer console.
 - Rule-based fallback scoring is keyword matching: configure an LLM for real judgment.
 - Local single-user app (SQLite file `outreach.db`); not hosted.
 
-## Files
-`app.py` UI · `x.py` X API + OAuth · `llm.py` filtering, scoring, drafting, output checks ·
-`db.py` storage + send guard · `mock_x.py` offline demo data · `test_core.py` self-checks
-(`uv run python test_core.py`) · `eval_drafts.py` offline draft-quality scoring · `send_test.py` live send test to
-your own test account (costs real X credits) · `demo.py` records the demo video · `persona_test.py` personalisation
-test on real public accounts (never sends) · `test_redirect.py` self-check for test-recipient mode (mock).
+## Project layout
+```
+app.py                    Streamlit UI (entry point): Find people → Review & send → Inbox
+outreach/                 core logic
+  x.py                    X API v2 client, OAuth 2.0 PKCE, cost logging, test-recipient redirect
+  db.py                   SQLite state; the one-message-per-person send guard; activity log
+  llm.py                  free pre-filter, LLM score + draft (LiteLLM), grounding/sender/familiarity checks
+  mock_x.py               fictional X accounts for mock mode
+scripts/                  tools (run from the repo root with `uv run python -m scripts.<name>`)
+  eval_drafts.py          score drafts on 9 checks, stored vs regenerated ($0 on X)
+  persona_test.py         personalisation test on real public accounts, never sends
+  send_test.py            one live DM to an account you control (costs X credits)
+  demo.py                 records the captioned demo video (Playwright + Edge)
+tests/                    `uv run python -m tests.test_core` · `uv run python -m tests.test_redirect` (offline)
+docs/                     WRITEUP.md (one page) · TEST_LOG.md (all evidence) · ROADMAP.md (plan and status)
+AGENTS.md                 guide for coding agents working on this repo
+```

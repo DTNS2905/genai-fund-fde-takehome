@@ -1,6 +1,6 @@
 """Live test of the SEND path only (skips discovery/evidence): one DM to an account YOU control.
 
-  uv run python send_test.py @your_test_handle
+  uv run python -m scripts.send_test @your_test_handle
 
 Same guards as the app: one first message per person ever, DM-history check, budget cap, activity log.
 Then reply from the test account and use the app's Inbox -> Refresh from X.
@@ -12,8 +12,8 @@ import tomllib
 with open(".streamlit/secrets.toml", "rb") as f:  # same settings the app uses
     os.environ.update({k: str(v) for k, v in tomllib.load(f).items() if not isinstance(v, dict)})
 
-import db  # noqa: E402
-import x  # noqa: E402
+from outreach import db  # noqa: E402
+from outreach import x  # noqa: E402
 
 TEXT = ("Hi! This is a test message from my X outreach prototype (sent to my own test account). "
         "Please reply to check that replies are tracked.")

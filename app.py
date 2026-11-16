@@ -21,9 +21,9 @@ for k, v in list(os.environ.items()):
     if k.startswith("OVERRIDE_"):
         os.environ[k[len("OVERRIDE_"):]] = v
 
-import db  # noqa: E402
-import llm  # noqa: E402
-import x  # noqa: E402
+from outreach import db  # noqa: E402
+from outreach import llm  # noqa: E402
+from outreach import x  # noqa: E402
 
 st.set_page_config(page_title="X Outreach", page_icon="✉️", layout="wide")
 OPT_OUT = re.compile(r"\b(stop|unsubscribe|not interested|remove me|do not (message|contact)|don'?t (message|contact))\b", re.I)

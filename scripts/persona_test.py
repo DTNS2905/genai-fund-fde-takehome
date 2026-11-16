@@ -1,11 +1,11 @@
 """Personalisation test on real public accounts. NEVER SENDS: drafts go to a JSON + Markdown report only.
 
-  uv run python persona_test.py                              # default account set (below)
-  uv run python persona_test.py sama:ai-lab-ceo amasad:startup-ceo
-  uv run python persona_test.py --refresh                    # re-fetch posts (costs X credits again)
-  uv run python persona_test.py --search "<X query>" 15      # sample real authors from recent search (5 posts each)
-  uv run python persona_test.py --summary outputs/persona_test_*.json   # combine runs: pass rates + run-to-run variance
-  uv run python persona_test.py --to-queue outputs/persona_test_<time>.json
+  uv run python -m scripts.persona_test                              # default account set (below)
+  uv run python -m scripts.persona_test sama:ai-lab-ceo amasad:startup-ceo
+  uv run python -m scripts.persona_test --refresh                    # re-fetch posts (costs X credits again)
+  uv run python -m scripts.persona_test --search "<X query>" 15      # sample real authors from recent search (5 posts each)
+  uv run python -m scripts.persona_test --summary outputs/persona_test_*.json   # combine runs: pass rates + run-to-run variance
+  uv run python -m scripts.persona_test --to-queue outputs/persona_test_<time>.json
       # demo: put those drafts in the app's review queue ($0). Refused unless TEST_RECIPIENT is set,
       # so approving them can only ever deliver to your own test account.
 
@@ -19,10 +19,10 @@ import os
 import sys
 import time
 
-import eval_drafts  # loads .streamlit/secrets.toml into env; provides the checks
-import db
-import llm
-import x
+from scripts import eval_drafts  # loads .streamlit/secrets.toml into env; provides the checks
+from outreach import db
+from outreach import llm
+from outreach import x
 
 DEFAULT = ["sundarpichai:big-tech-ceo", "satyanadella:big-tech-ceo", "sama:ai-lab-ceo", "amasad:startup-ceo",
            "karpathy:builder-researcher", "DrJimFan:robotics-researcher",

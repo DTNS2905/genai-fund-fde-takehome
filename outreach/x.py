@@ -8,7 +8,7 @@ import urllib.parse
 
 import requests
 
-import db
+from outreach import db
 
 API = "https://api.x.com/2"
 SCOPES = "tweet.read users.read dm.read dm.write offline.access"
@@ -117,7 +117,7 @@ def api(method, path, price=None, **kw):
         raise XError("blocked", f"Budget of ${budget:.2f} reached (X_BUDGET_USD). Nothing was sent. "
                                 "Raise it in secrets.toml if you want to continue.")
     if MOCK:
-        import mock_x
+        from outreach import mock_x
         body = mock_x.handle(method, path, kw.get("params"), kw.get("json"))
     else:
         body = _http(method, path, **kw)
@@ -165,7 +165,7 @@ def _http(method, path, **kw):
 
 def me():
     if MOCK:
-        import mock_x
+        from outreach import mock_x
         return mock_x.ME
     return db.kv_get("me")
 

@@ -1,4 +1,4 @@
-"""Self-check for TEST_RECIPIENT mode (offline, mock). Run: uv run python test_redirect.py"""
+"""Self-check for TEST_RECIPIENT mode (offline, mock). Run: uv run python -m tests.test_redirect"""
 import os
 os.environ["X_MOCK"] = "1"
 os.environ["TEST_RECIPIENT"] = "my_test_inbox"
@@ -9,9 +9,9 @@ import time
 from datetime import datetime
 
 os.environ["OUTREACH_DB"] = os.path.join(tempfile.mkdtemp(), "t.db")
-import db  # noqa: E402
-import x  # noqa: E402
-import mock_x  # noqa: E402
+from outreach import db  # noqa: E402
+from outreach import x  # noqa: E402
+from outreach import mock_x  # noqa: E402
 
 assert x.MOCK and x.test_recipient() == ("my_test_inbox", "2100"), x.test_recipient()
 assert "recipient_id=2100" in x.compose_url("2001", "hi"), "compose link must point to the test account"

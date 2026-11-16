@@ -2,7 +2,7 @@
 
 Evidence of what was tested, how, and what it found. Public handles of real people are omitted.
 
-## Automated self-checks: `uv run python test_core.py`
+## Automated self-checks: `uv run python -m tests.test_core`
 Pass. Covers: one-message-per-person guard, retry only after rate limit, "unknown" outcome blocks,
 do-not-contact, reply handling, LLM evidence-ID validation, filters, conversation-ID parsing.
 
@@ -50,7 +50,7 @@ Inbox now says new replies can take a minute or two to appear.
 ## Personalisation v2 (16 Nov)
 Change: drafts must quote a 3-12 word detail from a cited post (`detail_quote`, verified by `llm.validate`),
 refer to it in their own words, ask one question, max 450 chars, with `SENDER_CONTEXT` as the one-line intro.
-Offline check with `uv run python eval_drafts.py` ($0): 6 real candidates from the live search, stored drafts vs
+Offline check with `uv run python -m scripts.eval_drafts` ($0): 6 real candidates from the live search, stored drafts vs
 drafts regenerated now (rule-based, drafter `rules/v2-grounded`) on the same posts.
 
 | drafts | n | grounded | no_paste | short | one_question | specific_q | no_cliche | unique_q | avg chars |
@@ -67,7 +67,7 @@ Findings
   final quality.
 - The eval measures form, not whether a person would reply. Real reply rate and human edit per version come from
   Inbox → Outcomes by draft version once there are about 30+ sends per version.
-- `uv run python test_core.py`: all checks passed.
+- `uv run python -m tests.test_core`: all checks passed.
 
 ### Rules vs local LLM (16 Nov, `LLM_MODEL=ollama/qwen3` via LiteLLM, $0, same 6 real candidates)
 | drafter | grounded | no_paste | short | one_question | specific_q | no_cliche | unique_q | avg chars |

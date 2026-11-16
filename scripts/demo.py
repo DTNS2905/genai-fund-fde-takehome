@@ -1,8 +1,8 @@
 """Record captioned demo videos with Playwright (uses installed Edge, no browser download). Captions only, no voice.
 
-  uv run python demo.py           # full flow in MOCK mode on :8502 -> $0, fictional accounts, sends nothing real
-  uv run python demo.py --live    # read-only tour of your LIVE app on :8501 (must be running), $0
-  uv run python demo.py --final   # the submission video: 6 scenes joined into videos/final_demo.mp4
+  uv run python -m scripts.demo           # full flow in MOCK mode on :8502 -> $0, fictional accounts, sends nothing real
+  uv run python -m scripts.demo --live    # read-only tour of your LIVE app on :8501 (must be running), $0
+  uv run python -m scripts.demo --final   # the submission video: 6 scenes joined into videos/final_demo.mp4
       1 title card · 2 live tour · 3 real-account personalisation results · 4 live send in TEST-RECIPIENT mode
       (one DM, ~$0.025, delivered ONLY to your test account; aborts unless the test-mode banner is showing)
       5 full mock flow incl. familiarity block · 6 results & limits card
@@ -160,7 +160,7 @@ def tab(page, name):
 
 
 def live_spend():
-    import db  # live DB (demo.py runs without X_MOCK)
+    from outreach import db  # live DB (demo.py runs without X_MOCK)
     return db.total_spend()
 
 
@@ -242,7 +242,7 @@ def live_test_send(page, cap):
     tab(page, "2 · Review & send")
     # Next real-account draft still in the queue (each person can only be messaged once, so this changes per run).
     # Located by the app's per-person widget keys (st-key-<key>_<x_id>), which are exact.
-    import db
+    from outreach import db
     queued = [p for p in db.people("drafted") if (p["source"] or "").startswith("persona test") and (p["score"] or 0) >= 5]
     if not queued:
         raise SystemExit("No real-account draft left in the queue (run persona_test.py --to-queue).")
