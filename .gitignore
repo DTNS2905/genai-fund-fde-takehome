@@ -1,0 +1,10 @@
+.streamlit/secrets.toml
+*.db
+*_activity.jsonl
+videos/
+.venv/
+__pycache__/
+.claude/
+*.pdf
+outputs/
+SUBMISSION.md
