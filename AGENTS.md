@@ -4,10 +4,37 @@ A local Streamlit tool that finds AI/robotics people on X, drafts evidence-groun
 each one, sends via the official X API, and tracks replies. Human setup: [README.md](README.md). Evidence of every
 test: [docs/TEST_LOG.md](docs/TEST_LOG.md). Layout: see "Project layout" in the README.
 
+## If a human asked you to set this up (runbook, ~15 min)
+`uv run python -m scripts.doctor` is your status check at any point: one line per item, OK/TODO/WARN with the next
+step. It never prints secrets and never calls a paid API.
+
+**You (the agent) do:**
+1. Check prerequisites: Python 3.11+, `uv` (install from https://docs.astral.sh/uv/ if missing).
+2. `git clone https://github.com/DTNS2905/genai-fund-fde-takehome.git && cd genai-fund-fde-takehome && uv sync`
+3. If `.streamlit/secrets.toml` does **not** exist, copy `.streamlit/secrets.toml.example` to it (never overwrite an
+   existing one: it holds the human's keys). It starts in mock mode.
+4. `uv run python -m tests.test_core`, `uv run python -m tests.test_redirect`, `uv run python -m scripts.doctor`.
+5. Start `uv run streamlit run app.py` and tell the human to open http://127.0.0.1:8501 for a $0 mock walkthrough.
+
+**Only the human can do** (give them these exact steps; never do them yourself, never ask them to paste keys into chat):
+- Create the X developer account and app, buy credits, set a spending limit (payment details are theirs).
+- In the app's *User authentication settings*: OAuth 2.0, **Web App**, permissions **Read and write and Direct
+  message**, callback **`http://127.0.0.1:8501/`**, any website URL they own.
+- Paste the **OAuth 2.0 Client ID and Client Secret** (Keys and tokens tab) into `.streamlit/secrets.toml` themselves.
+- Optionally get an LLM key (e.g. Gemini at aistudio.google.com) and paste it into `GEMINI_API_KEY` themselves,
+  or install Ollama for a free local model.
+- Have a second X account they control (for test messages), and click **Connect X account** in the app.
+
+**Then you:** edit only the non-secret settings in `secrets.toml` with targeted line edits (don't print the file):
+comment out `X_MOCK`, set `LLM_MODEL`, `TEST_RECIPIENT` (their second account), `X_BUDGET_USD` (e.g. "3").
+Restart the app, run `scripts.doctor` until it says **Ready**. A first live run (search + one test DM, ~$0.45)
+costs money: describe it and get the human's OK first; the README's "Minutes 13–15" section has the steps.
+
 ## Commands (run from the repo root)
 | Command | Cost | What |
 |---|---|---|
 | `uv sync` | free | install |
+| `uv run python -m scripts.doctor` | free | setup status, next step for each missing item (no secrets shown) |
 | `uv run python -m tests.test_core` | free | core self-checks (guard, validation, familiarity, parsing) |
 | `uv run python -m tests.test_redirect` | free | test-recipient mode (mock) |
 | `DEMO_PACE=0.3 uv run python -m scripts.demo` | free | full UI flow in mock mode via Playwright (exit 0 = pass) |

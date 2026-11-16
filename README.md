@@ -27,6 +27,9 @@ uv run streamlit run app.py
 Open http://127.0.0.1:8501. The example settings start in **mock mode**: fictional accounts, nothing sent, $0.
 Click *Find people*, review a draft, send, then *Inbox → Refresh* to see the whole loop.
 
+Check setup at any time with `uv run python -m scripts.doctor` (one line per item, next step for anything missing).
+**Using a coding agent?** Point it at [AGENTS.md](AGENTS.md): it has a setup runbook and says what only you can do.
+
 ### Minutes 3–10: connect your X account
 1. [developer.x.com](https://developer.x.com) → create a Project + App → **Billing**: buy credits and set a spending limit.
 2. App → **User authentication settings**: OAuth 2.0, type **Web App**, permissions **Read and write and Direct
@@ -171,6 +174,7 @@ scripts/                  tools (run from the repo root with `uv run python -m s
   persona_test.py         personalisation test on real public accounts, never sends
   send_test.py            one live DM to an account you control (costs X credits)
   demo.py                 records the captioned demo video (Playwright + Edge)
+  doctor.py               setup checker: what is configured, what is missing ($0, no secrets shown)
 tests/                    `uv run python -m tests.test_core` · `uv run python -m tests.test_redirect` (offline)
 docs/                     WRITEUP.md (one page) · TEST_LOG.md (all evidence) · ROADMAP.md (plan and status)
 AGENTS.md                 guide for coding agents working on this repo
