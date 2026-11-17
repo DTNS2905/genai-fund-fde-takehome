@@ -174,7 +174,7 @@ scripts/                  tools (run from the repo root with `uv run python -m s
   eval_drafts.py          score drafts on 9 checks, stored vs regenerated ($0 on X)
   persona_test.py         personalisation test on real public accounts, never sends
   send_test.py            one live DM to an account you control (costs X credits)
-  demo.py                 records the captioned demo video (Playwright + Edge)
+  demo.py                 records the captioned demo video (Playwright + Edge; narration with local Piper TTS)
   doctor.py               setup checker: what is configured, what is missing ($0, no secrets shown)
 tests/                    `uv run python -m tests.test_core` · `uv run python -m tests.test_redirect` (offline)
 docs/                     WRITEUP.md (one page) · TEST_LOG.md (all evidence) · ROADMAP.md (plan and status)

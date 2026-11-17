@@ -1,4 +1,7 @@
-"""Record captioned demo videos with Playwright (uses installed Edge, no browser download). Captions only, no voice.
+"""Record captioned, narrated demo videos with Playwright (uses installed Edge, no browser download).
+
+Narration: every caption is also spoken with Piper (local neural TTS, offline) if the voice model is present at
+voices/en_US-lessac-medium.onnx; each caption stays up until its sentence is spoken. --no-voice = captions only.
 
   uv run python -m scripts.demo           # full flow in MOCK mode on :8502 -> $0, fictional accounts, sends nothing real
   uv run python -m scripts.demo --live    # read-only tour of your LIVE app on :8501 (must be running), $0
@@ -28,6 +31,28 @@ LIVE_URL, MOCK_URL = "http://127.0.0.1:8501/", "http://127.0.0.1:8502/"
 SLOW = int(os.environ.get("DEMO_SLOW_MS", 350))  # delay per click/typing action
 PACE = float(os.environ.get("DEMO_PACE", 1.3 if FINAL else 1.0))  # caption time multiplier
 W, H = 1366, 768
+VOICE_MODEL = "voices/en_US-lessac-medium.onnx"
+VOICE = os.path.exists(VOICE_MODEL) and "--no-voice" not in sys.argv
+SPOKEN = []  # (clip index, seconds from clip start, wav path)
+CLIPS = []   # recorded clip paths, in order
+_voice = None
+
+
+def tts(text):
+    """Speak text with Piper into a cached wav; returns (path, seconds)."""
+    global _voice
+    import hashlib
+    import wave
+    os.makedirs("videos/_tmp/tts", exist_ok=True)
+    path = f"videos/_tmp/tts/{hashlib.sha1(text.encode()).hexdigest()[:16]}.wav"
+    if not os.path.exists(path):
+        if _voice is None:
+            from piper import PiperVoice
+            _voice = PiperVoice.load(VOICE_MODEL)
+        with wave.open(path, "wb") as w:
+            _voice.synthesize_wav(text, w)
+    with wave.open(path) as w:
+        return path, w.getnframes() / w.getframerate()
 
 CAPTION_JS = """t => {
   let d = document.getElementById('demo-cap');
@@ -84,8 +109,17 @@ def record(browser, scene, url=None, html_page=None):
     ctx.route("**/*", lambda r: r.continue_() if urlparse(r.request.url).hostname in ("127.0.0.1", "localhost")
               else r.abort())
     page = ctx.new_page()
+    t0, idx = time.monotonic(), len(CLIPS)  # video recording starts with the page
     page.set_default_timeout(45000)
-    cap = lambda text, secs=3.0: (page.evaluate(CAPTION_JS, text), page.wait_for_timeout(int(secs * 1000 * PACE)))
+
+    def cap(text, secs=3.0):
+        page.evaluate(CAPTION_JS, text)
+        wait = secs * PACE
+        if VOICE and text:
+            wav, dur = tts(text)
+            SPOKEN.append((idx, time.monotonic() - t0, wav))
+            wait = max(wait, dur + 0.6)  # keep the caption up until the sentence is spoken
+        page.wait_for_timeout(int(wait * 1000))
     if url:
         page.goto(url)
         see(page, "1 · Find people")
@@ -95,18 +129,55 @@ def record(browser, scene, url=None, html_page=None):
     cap("", 0.4)
     path = page.video.path()
     ctx.close()
+    CLIPS.append(path)
     return path
 
 
+def ff(*args):
+    subprocess.run(["ffmpeg", "-v", "error", "-y", *args], check=True)
+
+
+def duration(path):
+    out = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", path],
+                         capture_output=True, text=True).stdout.strip()
+    return float(out)
+
+
 def to_mp4(clips, out):
+    """Encode each clip (so durations are exact), join them, then lay the narration on one audio track."""
     if not shutil.which("ffmpeg"):
         print("ffmpeg not found: clips left in videos/_tmp")
         return
+    parts = []
+    for i, c in enumerate(clips):
+        parts.append(f"videos/_tmp/part{i}.mp4")
+        ff("-i", c, "-vf", "fps=25", "-c:v", "libx264", "-pix_fmt", "yuv420p", parts[-1])
     with open("videos/_tmp/list.txt", "w", encoding="utf-8") as f:
-        f.writelines(f"file '{os.path.abspath(c)}'\n" for c in clips)
-    subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", "videos/_tmp/list.txt",
-                    "-vf", "fps=25", "-c:v", "libx264", "-pix_fmt", "yuv420p", out], check=True)
-    print("Saved", out)
+        f.writelines(f"file '{os.path.abspath(p)}'\n" for p in parts)
+    silent = "videos/_tmp/joined.mp4"
+    ff("-f", "concat", "-safe", "0", "-i", "videos/_tmp/list.txt", "-c", "copy", silent)
+    if not SPOKEN:
+        shutil.move(silent, out)
+        print("Saved", out, "(no narration)")
+        return
+    import wave
+    starts = [0.0]
+    for p in parts:
+        starts.append(starts[-1] + duration(p))
+    with wave.open(SPOKEN[0][2]) as w:
+        rate, width, ch = w.getframerate(), w.getsampwidth(), w.getnchannels()
+    track = bytearray(int(starts[-1] * rate) * width * ch)
+    for idx, offset, wav in SPOKEN:  # one silent track, each sentence placed where its caption appeared
+        with wave.open(wav) as w:
+            pcm = w.readframes(w.getnframes())
+        at = int((starts[idx] + offset) * rate) * width * ch
+        track[at:at + len(pcm)] = pcm[:max(0, len(track) - at)]
+    with wave.open("videos/_tmp/voice.wav", "wb") as w:
+        w.setnchannels(ch), w.setsampwidth(width), w.setframerate(rate)
+        w.writeframes(bytes(track))
+    ff("-i", silent, "-i", "videos/_tmp/voice.wav", "-map", "0:v", "-map", "1:a", "-c:v", "copy",
+       "-c:a", "aac", "-b:a", "128k", "-shortest", out)
+    print("Saved", out, f"({len(SPOKEN)} narrated captions)")
 
 
 def main():
@@ -118,12 +189,12 @@ def main():
         with sync_playwright() as pw:
             browser = pw.chromium.launch(channel="msedge", headless=False, slow_mo=SLOW)
             if FINAL:
-                clips = [record(browser, lambda p, c: c("", 9), html_page=title_html()),
+                clips = [record(browser, title_scene, html_page=title_html()),
                          record(browser, tour_live, LIVE_URL),
                          record(browser, persona_scene, html_page=persona_html()),
                          record(browser, live_test_send, LIVE_URL),
                          record(browser, flow_mock, MOCK_URL),
-                         record(browser, lambda p, c: c("", 22), html_page=limits_html())]
+                         record(browser, limits_scene, html_page=limits_html())]
                 browser.close()
                 to_mp4(clips, "videos/final_demo.mp4")
             else:
@@ -176,7 +247,7 @@ def persona_runs():
 
 def title_html():
     return """<main><h1>X Outreach: find AI &amp; robotics builders, start real conversations</h1>
-<p class="sub">GenAI Fund FDE take-home · working prototype · captions only</p>
+<p class="sub">GenAI Fund FDE take-home · working prototype · narrated, with captions</p>
 <div class="box"><b>What it does:</b> finds people on X from a segment or seed accounts → explains why each fits with
 links to their own posts → drafts a short DM grounded in a real post → a human edits and approves → sends → tracks
 replies, opt-outs and blocked sends. Never messages anyone twice.</div>
@@ -185,6 +256,22 @@ replies, opt-outs and blocked sends. Never messages anyone twice.</div>
 <li>Real public accounts were used only to test personalisation. <b>Nothing was sent to them.</b></li>
 <li>The one live send uses <b>test-recipient mode</b>: every message is delivered to my own test account.</li>
 <li>The full flow is also shown in mock mode with fictional accounts.</li></ul></div></main>"""
+
+
+def title_scene(page, cap):
+    cap("This is X Outreach, a working prototype. It finds AI and robotics builders on X, explains why each one "
+        "fits, and drafts a short message grounded in their own posts.", 6)
+    cap("A human approves every message. In this video, real accounts were only used to test personalisation: "
+        "nothing was sent to them. The one live send goes to my own test account.", 6)
+
+
+def limits_scene(page, cap):
+    cap("To finish: what was verified live, what was measured, and the honest limits.", 4)
+    cap("Live on X: login, search, sending to my test account, the double-send guard, and reply detection.", 6)
+    cap("The checks prove that drafts are grounded and well formed, not that people will reply. "
+        "Reply rates need real volume.", 6)
+    cap("Next steps: an explainable fit score, a regenerate button, and human-approved follow-ups. "
+        "Thanks for watching.", 6)
 
 
 def tour_live(page, cap):

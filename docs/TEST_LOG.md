@@ -204,6 +204,17 @@ machine) → copy example settings → `tests.test_core` ✅ → `tests.test_red
 `DEMO_PACE=0.3 uv run python -m scripts.demo`: exit 0 in 42 s. Not covered: the human-only steps (X developer app,
 credits, keys), which the README budgets at ~10 minutes.
 
+### Narrated final video (17 Nov 08:51)
+Every caption is also spoken by Piper (`en_US-lessac-medium`, local, offline); each caption stays up until its
+sentence ends. `demo.py --final` → 28 narrated captions; audio and video both 277.3 s. Sync checked: speech start
+times (ffmpeg `silencedetect`) vs frames at 7 points across title, live tour, results table (start and scrolled),
+mock flow and limits card: the caption on screen matches the spoken sentence each time.
+Post-processing, both verified: (1) the title said "captions only": covered with the corrected text
+("narrated, with captions"); (2) 12 s of silent title card cut from video and audio together (all later speech
+starts shift by exactly 12.0 s; final 265.3 s = 4:25). Live scene sent @sundarpichai's draft to the test account.
+Receiving side confirmed by screenshots from the test account (17 Nov 08:47-08:49): the @sama, @amasad and
+@sundarpichai test DMs arrived labelled "[Test, written for @handle]", in an unencrypted chat (visible to the API).
+
 ### Familiarity detector (16 Nov)
 `llm.familiarity()` flags phrases implying a relationship we don't have (been following, nice meeting you, your
 keynote, as we discussed, huge fan, ...). It triggers the repair call and **blocks approval** in the review screen

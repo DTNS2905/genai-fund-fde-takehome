@@ -76,6 +76,9 @@ with `X_BUDGET_USD`. Never raise the cap or set/unset `TEST_RECIPIENT` without b
   are rate-limited (refresh ≤ 1/min); errors map to plain reasons in `x.PROBLEMS`.
 - **UI tests:** locate per-person widgets by Streamlit keys (`.st-key-ok_<x_id>`, `.st-key-b_<x_id>`); text
   locators must be scoped to `[data-testid=stAppViewContainer]` so on-screen captions don't match.
+- **Demo narration** uses Piper (local TTS, dev dependency). The voice model is not in git: download
+  `en_US-lessac-medium.onnx` + `.onnx.json` from huggingface.co/rhasspy/piper-voices (en/en_US/lessac/medium)
+  into `voices/` (ask the human first: ~63 MB). Without it `scripts.demo` records captions only.
 - Keep it small: few files, no new dependencies without a reason, `ponytail:` comments mark known shortcuts.
 
 ## Before you finish a change
