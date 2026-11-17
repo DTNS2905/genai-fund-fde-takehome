@@ -215,6 +215,11 @@ starts shift by exactly 12.0 s; final 265.3 s = 4:25). Live scene sent @sundarpi
 Receiving side confirmed by screenshots from the test account (17 Nov 08:47-08:49): the @sama, @amasad and
 @sundarpichai test DMs arrived labelled "[Test, written for @handle]", in an unencrypted chat (visible to the API).
 
+**Reply attribution, 4 people through one test-account conversation (17 Nov, one inbox refresh):** replies sent
+in order from the test account were each matched to the person the message was written for: @karpathy ("ok i see
+it for test case karpathy"), @DrJimFan ("...for drJimFan"), @sama ("...for sama"), @amasad ("...for amasad").
+4/4 correct. @sundarpichai had no reply yet at the time of the refresh.
+
 ### Familiarity detector (16 Nov)
 `llm.familiarity()` flags phrases implying a relationship we don't have (been following, nice meeting you, your
 keynote, as we discussed, huge fan, ...). It triggers the repair call and **blocks approval** in the review screen
