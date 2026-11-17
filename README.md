@@ -18,6 +18,7 @@ score + draft       editable draft
 optionally a free [Gemini API key](https://aistudio.google.com) or [Ollama](https://ollama.com) for LLM drafts.
 
 ### Minutes 0–3: install and try it with fake data ($0)
+Got the zip instead of the link? Unzip it, `cd genai-fund-fde-takehome`, and start from `uv sync`.
 ```bash
 git clone https://github.com/DTNS2905/genai-fund-fde-takehome.git && cd genai-fund-fde-takehome
 uv sync
